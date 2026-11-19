@@ -1,9 +1,26 @@
 /**
  * Design tokens, ported exactly from the design handoff: every hex/rgba value
- * matches its Design Tokens table. Two themes, Night (default) and Daylight.
+ * matches its Design Tokens table. Two themes, Night (default) and Daylight,
+ * plus 'system' to follow the phone's light/dark setting.
  */
 
-export type ThemeMode = 'dark' | 'light';
+export type ThemeMode = 'system' | 'dark' | 'light';
+
+/** A ThemeMode with 'system' already resolved against the OS scheme. */
+export type ResolvedThemeMode = 'dark' | 'light';
+
+export function isThemeMode(value: unknown): value is ThemeMode {
+  return value === 'system' || value === 'dark' || value === 'light';
+}
+
+/** 'system' follows the phone; an unknown or unspecified OS scheme falls back to Night, the default. */
+export function resolveThemeMode(
+  mode: ThemeMode,
+  systemScheme: 'dark' | 'light' | 'unspecified' | null | undefined,
+): ResolvedThemeMode {
+  if (mode === 'dark' || mode === 'light') return mode;
+  return systemScheme === 'light' ? 'light' : 'dark';
+}
 
 export type ActivityKey = 'feeding' | 'sleep' | 'diaper' | 'pumping' | 'tummy' | 'bath' | 'temperature' | 'medication' | 'note' | 'milestone';
 
@@ -29,7 +46,7 @@ export interface Palette {
 }
 
 export interface Theme extends Palette {
-  mode: ThemeMode;
+  mode: ResolvedThemeMode;
   activity: Record<ActivityKey, string>;
 }
 
@@ -109,7 +126,7 @@ export const SOLID_COLORS: Record<'black' | 'brown' | 'green' | 'yellow', string
   yellow: '#D8B04A',
 };
 
-export function makeTheme(mode: ThemeMode): Theme {
+export function makeTheme(mode: ResolvedThemeMode): Theme {
   const palette = mode === 'dark' ? NIGHT : DAYLIGHT;
   return {
     ...palette,

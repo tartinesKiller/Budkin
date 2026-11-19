@@ -6984,6 +6984,13 @@ describe('theme persistence', () => {
     expect(savePrefs).toHaveBeenCalledWith({ themeMode: 'dark' });
   });
 
+  it('setThemeMode persists the chosen mode, including system', () => {
+    useAppStore.setState({ themeMode: 'dark' });
+    s().setThemeMode('system');
+    expect(s().themeMode).toBe('system');
+    expect(savePrefs).toHaveBeenCalledWith({ themeMode: 'system' });
+  });
+
   it('hydrate applies a persisted themeMode', async () => {
     h.prefs = { themeMode: 'light' };
     vi.mocked(loadConnection).mockResolvedValueOnce(null);
@@ -6998,6 +7005,22 @@ describe('theme persistence', () => {
     useAppStore.setState({ themeMode: 'dark' });
     await s().hydrate();
     expect(s().themeMode).toBe('dark');
+  });
+
+  it("hydrate applies a persisted 'system' themeMode", async () => {
+    h.prefs = { themeMode: 'system' };
+    vi.mocked(loadConnection).mockResolvedValueOnce(null);
+    useAppStore.setState({ themeMode: 'dark' });
+    await s().hydrate();
+    expect(s().themeMode).toBe('system');
+  });
+
+  it('hydrate ignores a corrupted persisted themeMode', async () => {
+    h.prefs = { themeMode: 'blue' as never };
+    vi.mocked(loadConnection).mockResolvedValueOnce(null);
+    useAppStore.setState({ themeMode: 'light' });
+    await s().hydrate();
+    expect(s().themeMode).toBe('light');
   });
 
   it('hydrate applies a persisted theme for a demo connection too', async () => {

@@ -122,7 +122,7 @@ import {
 } from '@/store/selectors';
 import { treatmentCooldownLabel } from '@/features/treatments/treatmentLabels';
 import { hideUnitsNotice, initUnitsNotice } from '@/features/unitsNotice/unitsNotice'; // UNITS NOTICE
-import type { ThemeMode } from '@/theme/tokens';
+import { isThemeMode, type ThemeMode } from '@/theme/tokens';
 import type {
   ActivityType,
   BathRhythm,
@@ -296,6 +296,7 @@ export type AdoptResult =
 interface AppActions {
   tick: (now: number) => void;
   toggleTheme: () => void;
+  setThemeMode: (mode: ThemeMode) => void;
   completeTutorial: () => void;
   setUnitSystem: (system: UnitSystem) => void;
   toggleUnitSystem: () => void;
@@ -1432,6 +1433,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
     set({ themeMode: next });
     void savePrefs({ themeMode: next });
   },
+  setThemeMode: (mode) => {
+    set({ themeMode: mode });
+    void savePrefs({ themeMode: mode });
+  },
   completeTutorial: () => {
     set({ tutorialSeen: true });
     void savePrefs({ tutorialSeen: true });
@@ -1552,7 +1557,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     const conn = await loadConnection();
     const q = await loadQueue();
     const prefs = await loadPrefs();
-    if (prefs.themeMode) set({ themeMode: prefs.themeMode });
+    if (isThemeMode(prefs.themeMode)) set({ themeMode: prefs.themeMode });
     if (prefs.unitSystem) set({ unitSystem: prefs.unitSystem });
     initUnitsNotice(prefs); // UNITS NOTICE
     if (prefs.showGrowthReference != null) set({ showGrowthReference: prefs.showGrowthReference });

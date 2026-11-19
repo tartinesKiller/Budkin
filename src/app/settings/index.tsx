@@ -245,7 +245,7 @@ export default function Settings() {
   const networkOnline = useAppStore((s) => s.networkOnline);
   const connection = useAppStore((s) => s.connection);
   const queueCount = useAppStore((s) => s.queueCount);
-  const toggleTheme = useAppStore((s) => s.toggleTheme);
+  const setThemeMode = useAppStore((s) => s.setThemeMode);
   const setUnitSystem = useAppStore((s) => s.setUnitSystem);
   const hiddenActivities = useAppStore((s) => s.hiddenActivities);
   const children = useAppStore((s) => s.children);
@@ -497,22 +497,30 @@ export default function Settings() {
         Appearance
       </Txt>
       <View style={group}>
-        <Tappable
-          onPress={toggleTheme}
-          accessibilityRole="switch"
-          accessibilityLabel="Night mode"
-          accessibilityState={{ checked: themeMode === 'dark' }}
-          style={(s) => [
-            row,
-            { borderBottomWidth: 1, borderBottomColor: t.line, cursor: 'pointer' },
-            isHovered(s) && { backgroundColor: t.elevated },
-          ]}
-        >
-          <Txt unselectable weight={600} size={16} style={{ flex: 1 }}>
-            Night mode
-          </Txt>
-          <Toggle on={themeMode === 'dark'} />
-        </Tappable>
+        <View style={[row, { borderBottomWidth: 1, borderBottomColor: t.line }]}>
+          <View style={{ flex: 1 }}>
+            <Txt weight={600} size={16}>
+              Theme
+            </Txt>
+            <Txt weight={500} size={13} color={t.dim} style={{ marginTop: 2 }}>
+              Follow the phone, or pick one.
+            </Txt>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {(['system', 'dark', 'light'] as const).map((m) => (
+              <Chip
+                key={m}
+                label={m === 'system' ? 'System' : m === 'dark' ? 'Night' : 'Daylight'}
+                color={t.primary}
+                selected={themeMode === m}
+                onPress={() => setThemeMode(m)}
+                padH={13}
+                padV={7}
+                fontSize={13.5}
+              />
+            ))}
+          </View>
+        </View>
         <View style={[row, { borderBottomWidth: __DEV__ ? 1 : 0, borderBottomColor: t.line }]}>
           {/* Baby Buddy stores bare numbers, so this names their unit rather than
               converting them: other clients write in whatever the family types. */}
