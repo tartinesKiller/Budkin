@@ -10,6 +10,7 @@ import { isHovered } from '@/components/hover';
 import { IconButton } from '@/components/IconButton';
 import { Tappable } from '@/components/press';
 import { Txt } from '@/components/Txt';
+import { treatmentRangeInvalid } from '@/features/treatments/treatmentLabels';
 import { hexA } from '@/lib/color';
 import { fontFamily } from '@/theme/fonts';
 import { useAppStore } from '@/store/useAppStore';
@@ -92,7 +93,15 @@ function Inner({ editingId, openedAt }: { editingId: string | null; openedAt: nu
   const [active, setActive] = useState(editing?.active ?? true);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const canSave = name.trim().length > 0;
+  // An end date before the start date would make the treatment never active
+  // (isTreatmentActiveToday requires toDate >= today), so it is refused here rather
+  // than saved as a silently invisible treatment.
+  const rangeInvalid = treatmentRangeInvalid(
+    toMidnightMs(fromD, fromM, fromY),
+    toEnabled ? toMidnightMs(toD, toM, toY) : undefined,
+  );
+
+  const canSave = name.trim().length > 0 && !rangeInvalid;
 
   const toggleTime = (tod: TreatmentTimeOfDay) =>
     setTimes((prev) => (prev.includes(tod) ? prev.filter((x) => x !== tod) : [...prev, tod]));
@@ -350,6 +359,11 @@ function Inner({ editingId, openedAt }: { editingId: string | null; openedAt: nu
         {toEnabled && (
           <View style={{ marginBottom: 16 }}>
             <DateFields day={toD} month={toM} year={toY} onDay={setToD} onMonth={setToM} onYear={setToY} />
+            {rangeInvalid && (
+              <Txt weight={700} size={13} color="#E2725B" style={{ marginTop: 6 }}>
+                End date is before the start date — this treatment would never show in the log picker.
+              </Txt>
+            )}
           </View>
         )}
 

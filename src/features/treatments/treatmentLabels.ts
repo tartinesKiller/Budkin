@@ -41,3 +41,10 @@ export function treatmentDosageLabel(treatment: Treatment): string {
   if (treatment.dosage == null) return '';
   return [String(treatment.dosage), treatment.dosageUnit].filter(Boolean).join(' ');
 }
+
+/** True when an end date is set before the start date. Such a treatment is never
+ *  active (`isTreatmentActiveToday` requires toDate >= today), so the editor refuses
+ *  to save it instead of letting it silently drop out of the log picker. */
+export function treatmentRangeInvalid(fromDate: number, toDate: number | undefined): boolean {
+  return toDate != null && toDate < fromDate;
+}
