@@ -168,7 +168,9 @@ export function TimelineEntry({ item, now, onPress, isFirst, isLast, queued = fa
       {/* clock column */}
       <View style={{ width: TIME_W, paddingRight: 8 }}>
         {isPoint ? (
-          <View style={{ position: 'absolute', right: 8, top: nodeTop, height: DOT, justifyContent: 'center' }}>
+          // The box must fit the 13.5px clock text, not the DOT: a fixed height of DOT
+          // clips/centers the glyphs wrong on some rows. 18px tall, centered on the dot.
+          <View style={{ position: 'absolute', right: 8, top: nodeTop + DOT / 2 - 9, height: 18, justifyContent: 'center' }}>
             <Txt weight={600} size={13.5} style={{ fontVariant: ['tabular-nums'], textAlign: 'right' }}>
               {fmtClock(start)}
             </Txt>
