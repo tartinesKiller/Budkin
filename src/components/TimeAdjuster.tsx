@@ -102,6 +102,10 @@ export function TimeAdjuster({ mode, value, now, color, onChange, showRelative =
         value={text ?? display}
         onFocus={() => setText('')}
         onChangeText={setText}
+        // Pin the caret to the end of the typed text while editing: without it, the first
+        // focus keeps the caret where the old display value left it (off-centre in the
+        // centred field) until the first keystroke moves it.
+        selection={text != null ? { start: text.length, end: text.length } : undefined}
         onBlur={() => text != null && commitText(text)}
         onSubmitEditing={() => text != null && commitText(text)}
         placeholder={display}

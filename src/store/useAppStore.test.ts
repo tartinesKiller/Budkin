@@ -1321,6 +1321,25 @@ describe('save', () => {
     expect(s().te.startAbs).toBe(NOW - 200 * M);
   });
 
+  it('leaving ongoing without touching start re-derives it from end - lasted', () => {
+    s().openSheet('feeding'); // end = now, lasted = 18min default
+    s().setOngoing();
+    expect(s().te.startAbs).toBe(NOW); // pinned when going live
+    s().setEnded(0); // back to "just ended", nothing else touched
+    expect(s().te.ongoing).toBe(false);
+    expect(s().te.startAbs).toBeUndefined();
+    expect(s().te.order).toEqual(['end', 'lasted', 'start']);
+    expect(teStart(s().te, NOW)).toBe(NOW - 18 * M); // derived again
+  });
+
+  it('leaving ongoing keeps a start the user edited while live', () => {
+    s().openSheet('feeding');
+    s().setOngoing();
+    s().setStartedAt(NOW - 200 * M);
+    s().setEnded(0);
+    expect(s().te.startAbs).toBe(NOW - 200 * M);
+  });
+
   it('a live interval carries the draft\'s details onto the timer', () => {
     // Everything typed into the sheet before "Still feeding" must survive: a timer
     // created bare silently drops a just-typed note.

@@ -139,9 +139,10 @@ export default function Timers() {
                         accessibilityLabel={`Name of the ${tm.name} timer`}
                         style={{
                           flex: 1,
-                          height: 30,
-                          paddingHorizontal: 6,
-                          borderRadius: 8,
+                          height: 42,
+                          paddingHorizontal: 10,
+                          textAlignVertical: 'center',
+                          borderRadius: 10,
                           borderWidth: 1.5,
                           borderColor: t.line,
                           backgroundColor: t.surface,

@@ -497,8 +497,8 @@ export default function Settings() {
         Appearance
       </Txt>
       <View style={group}>
-        <View style={[row, { borderBottomWidth: 1, borderBottomColor: t.line }]}>
-          <View style={{ flex: 1 }}>
+        <View style={[row, { borderBottomWidth: 1, borderBottomColor: t.line, flexDirection: 'column', alignItems: 'stretch', gap: 10 }]}>
+          <View>
             <Txt weight={600} size={16}>
               Theme
             </Txt>
@@ -506,7 +506,9 @@ export default function Settings() {
               Follow the phone, or pick one.
             </Txt>
           </View>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
+          {/* Chips on their own line, not squeezed beside the label: three of them next to
+              the label+subtitle left too little width per chip on a phone. */}
+          <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
             {(['system', 'dark', 'light'] as const).map((m) => (
               <Chip
                 key={m}
@@ -514,9 +516,9 @@ export default function Settings() {
                 color={t.primary}
                 selected={themeMode === m}
                 onPress={() => setThemeMode(m)}
-                padH={13}
-                padV={7}
-                fontSize={13.5}
+                padH={16}
+                padV={9}
+                fontSize={14}
               />
             ))}
           </View>

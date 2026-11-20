@@ -3456,6 +3456,16 @@ export const useAppStore = create<AppStore>((set, get) => ({
         next.order = ov.order;
       } else {
         next.order = reorder(s.te.order, 'end');
+        // Leaving "still ongoing" on a FRESH sheet with an untouched start: drop the pin
+        // setOngoing made so start derives from end - lasted again, the reverse of going
+        // live. A start the user edited keeps its pin, and so does an entry/timer edit,
+        // whose pinned start is the record's own, not setOngoing's.
+        if (s.te.ongoing && !s.te.startEdited && !s.editingId && !s.fromTimerId) {
+          next.startAbs = undefined;
+          next.startAgoMin = undefined;
+          next.startAnchor = undefined;
+          next.order = ['end', 'lasted', 'start'];
+        }
       }
       return { te: next };
     }),
@@ -3469,6 +3479,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
         next.order = ov.order;
       } else {
         next.order = reorder(s.te.order, 'end');
+        if (s.te.ongoing && !s.te.startEdited && !s.editingId && !s.fromTimerId) {
+          next.startAbs = undefined;
+          next.startAgoMin = undefined;
+          next.startAnchor = undefined;
+          next.order = ['end', 'lasted', 'start'];
+        }
       }
       return { te: next };
     }),
