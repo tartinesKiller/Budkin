@@ -26,6 +26,8 @@ export interface DecodedTimer {
   startSide?: 'left' | 'right';
   amount?: number;
   nap?: boolean;
+  /** custom label of a generic ('note') timer; absent means the plain activity label */
+  name?: string;
 }
 
 /**
@@ -48,6 +50,9 @@ export function encodeTimerName(t: Timer): string {
     if (t.amount != null) toks.push(`amt:${t.amount}`);
   } else if (t.saveAs === 'sleep') {
     if (t.nap === true) toks.push('nap');
+  } else if (t.saveAs === 'note') {
+    // The custom label rides in an `n:` token; SEP inside it would break the grammar.
+    toks.push(`n:${t.name.replaceAll(SEP, '/')}`);
   }
   return `${ACTIVITY_LABEL[t.saveAs]}${SEP}${toks.join(SEP)}`;
 }
@@ -66,6 +71,8 @@ export function decodeTimerName(name: string): DecodedTimer {
     else if (tok.startsWith('amt:')) {
       const n = Number(tok.slice(4));
       if (Number.isFinite(n)) d.amount = n;
+    } else if (tok.startsWith('n:')) {
+      d.name = tok.slice(2).replaceAll('/', SEP);
     }
   }
   return d;
@@ -83,7 +90,7 @@ export function serverTimerToTimer(
     childId,
     activity: d.saveAs,
     saveAs: d.saveAs,
-    name: ACTIVITY_LABEL[d.saveAs],
+    name: d.name ?? ACTIVITY_LABEL[d.saveAs],
     start: raw.start,
     feedType: d.feedType,
     method: d.method,

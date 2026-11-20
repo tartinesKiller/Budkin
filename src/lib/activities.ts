@@ -121,7 +121,10 @@ export function allowsMultipleChildren(type: ActivityType): boolean {
   return SHARED_ROUTINE_ACTIVITIES.includes(type);
 }
 
-export const TIMER_SAVE_OPTIONS: ActivityType[] = ['feeding', 'sleep', 'pumping', 'tummy'];
+/** What a quick timer can be saved as when stopped. 'note' is the generic option: the
+ *  timer's custom name becomes the note's text, so anything that is not a baby activity
+ *  (e.g. "hot water in the bottle warmer") can still be timed and logged. */
+export const TIMER_SAVE_OPTIONS: ActivityType[] = ['feeding', 'sleep', 'pumping', 'tummy', 'note'];
 
 export interface DurationShortcutCopy {
   /** the "log it as just-ended" button */

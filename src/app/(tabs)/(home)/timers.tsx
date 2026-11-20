@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, RefreshControl, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Platform, RefreshControl, ScrollView, TextInput, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -36,6 +36,7 @@ export default function Timers() {
   const discardTimer = useAppStore((s) => s.discardTimer);
   const openTimerEdit = useAppStore((s) => s.openTimerEdit);
   const setTimerSaveAs = useAppStore((s) => s.setTimerSaveAs);
+  const setTimerName = useAppStore((s) => s.setTimerName);
   const adjustTimerStart = useAppStore((s) => s.adjustTimerStart);
   const setTimerStart = useAppStore((s) => s.setTimerStart);
   const startQuickTimer = useAppStore((s) => s.startQuickTimer);
@@ -126,10 +127,37 @@ export default function Timers() {
                   <Icon name={tm.saveAs === 'sleep' ? 'sleep' : tm.saveAs} color={color} size={21} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Txt weight={700} size={16}>
-                    {tm.name}
-                    {who.drawn}
-                  </Txt>
+                  {tm.saveAs === 'note' ? (
+                    // A generic timer's label is free text: it becomes the note's text
+                    // when the timer is stopped, so name it after the thing being timed.
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <TextInput
+                        value={tm.name}
+                        onChangeText={(v) => setTimerName(tm.id, v)}
+                        placeholder="Timer name"
+                        placeholderTextColor={t.faint}
+                        accessibilityLabel={`Name of the ${tm.name} timer`}
+                        style={{
+                          flex: 1,
+                          height: 30,
+                          paddingHorizontal: 6,
+                          borderRadius: 8,
+                          borderWidth: 1.5,
+                          borderColor: t.line,
+                          backgroundColor: t.surface,
+                          color: t.text,
+                          fontSize: 16,
+                          fontWeight: '700',
+                        }}
+                      />
+                      {who.drawn ? <Txt weight={700} size={16}>{who.drawn}</Txt> : null}
+                    </View>
+                  ) : (
+                    <Txt weight={700} size={16}>
+                      {tm.name}
+                      {who.drawn}
+                    </Txt>
+                  )}
                   <Txt weight={500} size={12.5} color={t.dim}>
                     started {fmtAgo(tm.start, now)}
                   </Txt>

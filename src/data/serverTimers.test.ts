@@ -63,6 +63,20 @@ describe('encode/decode timer name', () => {
     expect(decodeTimerName('Sleep · v1').nap).toBeUndefined();
   });
 
+  it('round-trips a generic note timer with its custom name', () => {
+    const t = base({ saveAs: 'note', activity: 'note', name: 'Hot water in dispenser' });
+    const name = encodeTimerName(t);
+    expect(name).toBe('Note \u00b7 v1 \u00b7 n:Hot water in dispenser');
+    expect(decodeTimerName(name)).toMatchObject({ saveAs: 'note', name: 'Hot water in dispenser' });
+    const back = serverTimerToTimer({ id: 9, name, start: 5 }, 'c1');
+    expect(back).toMatchObject({ saveAs: 'note', name: 'Hot water in dispenser' });
+  });
+
+  it('keeps a note name containing the separator intact through the wire format', () => {
+    const t = base({ saveAs: 'note', activity: 'note', name: 'a \u00b7 b' });
+    expect(decodeTimerName(encodeTimerName(t)).name).toBe('a \u00b7 b');
+  });
+
   it('falls back to a generic feeding timer for a foreign/unmarked name', () => {
     expect(decodeTimerName('Kitchen nap timer')).toMatchObject({ saveAs: 'feeding' });
     // a foreign name must not leak structural fields

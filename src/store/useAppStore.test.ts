@@ -1300,6 +1300,27 @@ describe('save', () => {
     expect(s().timers[0].saveAs).toBe('sleep');
   });
 
+  it('going ongoing on a fresh draft starts the timer NOW, not now minus the default duration', () => {
+    s().openSheet('feeding'); // fresh draft: end = now, lasted = 18min default, start derived
+    s().setOngoing();
+    s().save();
+    expect(s().timers[0].start).toBe(NOW);
+  });
+
+  it('going ongoing keeps the derived start when the end was explicitly moved', () => {
+    s().openSheet('feeding');
+    s().setEnded(30); // "ended 30min ago": overruleLasted freezes the derived start (now - 18min)
+    s().setOngoing();
+    expect(s().te.startAbs).toBe(NOW - 18 * M);
+  });
+
+  it('going ongoing honours a start the user edited themselves on a fresh draft', () => {
+    s().openSheet('feeding');
+    s().setStartedAt(NOW - 200 * M);
+    s().setOngoing();
+    expect(s().te.startAbs).toBe(NOW - 200 * M);
+  });
+
   it('a live interval carries the draft\'s details onto the timer', () => {
     // Everything typed into the sheet before "Still feeding" must survive: a timer
     // created bare silently drops a just-typed note.
@@ -1785,6 +1806,31 @@ describe('stopTimer', () => {
     expect(s().entries[0].type).toBe('sleep');
     await flush();
     expect(h.pushed).toHaveLength(1);
+  });
+
+  it('stopping a generic timer saves a note stamped at the timer start with the custom name', async () => {
+    useAppStore.setState({
+      children: [SYNCED_C1],
+      timers: [{ id: 't1', activity: 'note', name: 'Hot water in dispenser', start: NOW - 30 * M, saveAs: 'note' }],
+    });
+    s().stopTimer('t1');
+    expect(s().timers).toHaveLength(0);
+    const e = s().entries[0] as Extract<Entry, { type: 'note' }>;
+    expect(e.type).toBe('note');
+    expect(e.time).toBe(NOW - 30 * M);
+    expect(e.text).toBe('Hot water in dispenser');
+    await flush();
+    expect(h.pushed).toHaveLength(1);
+  });
+
+  it('setTimerName renames a timer and mirrors the edit to the server', () => {
+    useAppStore.setState({
+      children: [SYNCED_C1],
+      timers: [{ id: 't1', activity: 'note', name: 'Note', start: NOW - 5 * M, saveAs: 'note', serverId: 42, childId: 'c1' }],
+    });
+    s().setTimerName('t1', 'Hot water in dispenser');
+    expect(s().timers[0].name).toBe('Hot water in dispenser');
+    expect(h.timerUpdated).toHaveLength(1);
   });
 
   // Stopping a timer while genuinely online can leave the entry on the write queue, its
@@ -7398,10 +7444,10 @@ describe('home card visibility', () => {
     expect(s().timers[0].name).toBe('Sleep');
   });
 
-  it('a quick timer falls back to feeding when every save-as option is hidden', () => {
+  it('a quick timer falls back to a generic note timer when every activity option is hidden', () => {
     useAppStore.setState({ connection: { mode: 'local' }, hiddenActivities: ['feeding', 'sleep', 'pumping', 'tummy'] });
     s().startQuickTimer();
-    expect(s().timers[0].saveAs).toBe('feeding');
+    expect(s().timers[0].saveAs).toBe('note');
   });
 });
 

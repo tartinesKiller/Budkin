@@ -450,6 +450,7 @@ interface AppActions {
   setTimerStart: (id: string, ms: number) => void;
   discardTimer: (id: string) => void;
   setTimerSaveAs: (id: string, saveAs: ActivityType) => void;
+  setTimerName: (id: string, name: string) => void;
   /** Persist `te`'s metadata onto the running timer named by `fromTimerId`, WITHOUT
    *  stopping it or creating an entry. */
   saveTimerDetails: () => void;
@@ -1067,7 +1068,13 @@ function mirrorTimerEdit(get: Get, timer: Timer): void {
 
 /** Where a "still ongoing" interval actually started. On an EDIT the logged entry's own
  *  `start` is the only exact answer: `openEdit` pins the end plus a duration ROUNDED to
- *  whole minutes, so the rounding alone can move a derived start by half a minute. */
+ *  whole minutes, so the rounding alone can move a derived start by half a minute.
+ *
+ *  On a NEW draft the derived start is end - default duration (e.g. now - 18min for a
+ *  feed): that default is a guess for a COMPLETED event, not a fact about a running one.
+ *  Going ongoing means "it started when I tapped", so an untouched draft (end still
+ *  "now", start never edited) pins start = now, exactly like a quick timer from Home.
+ *  Only an explicitly moved end or an explicitly edited start keeps the derived value. */
 function ongoingStartMs(
   te: TimeEntryState,
   entries: Entry[],
@@ -1077,6 +1084,16 @@ function ongoingStartMs(
   if (!te.startEdited && editingId) {
     const src = entries.find((e) => e.id === editingId);
     if (src && 'start' in src) return Math.min(src.start, now);
+  }
+  if (
+    !editingId &&
+    !te.startEdited &&
+    te.startAbs == null &&
+    te.startAgoMin == null &&
+    te.endAbs == null &&
+    (te.endAgoMin ?? 0) === 0
+  ) {
+    return now;
   }
   return Math.min(teStart(te, now) ?? now, now);
 }
@@ -3809,8 +3826,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   startQuickTimer: () => {
     const s = get();
-    // Pre-selects the first save-as option still on Home; feeding when none of them is.
-    const saveAs = TIMER_SAVE_OPTIONS.find((a) => !s.hiddenActivities.includes(a)) ?? 'feeding';
+    // Pre-selects the first save-as option still on Home; a generic 'note' timer when
+    // every activity tile is hidden, never a hidden activity.
+    const saveAs = TIMER_SAVE_OPTIONS.find((a) => a !== 'note' && !s.hiddenActivities.includes(a)) ?? 'note';
     const timer: Timer = {
       id: 't' + Date.now(),
       activity: saveAs,
@@ -3855,6 +3873,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
       entry = { ...base, type: 'pumping', start: tm.start, end: resolvedEnd, amount: tm.amount ?? DEFAULT_PUMP_AMOUNT[s.unitSystem], method: tm.method };
     } else if (saveAs === 'tummy') {
       entry = { ...base, type: 'tummy', start: tm.start, end: resolvedEnd, milestone: tm.milestone };
+    } else if (saveAs === 'note') {
+      // A generic timer logs as a note stamped at its START: what matters for e.g. "hot
+      // water in the dispenser" is when it began, and the timer already showed the elapsed.
+      entry = { ...base, type: 'note', time: tm.start, text: tm.name };
     } else {
       entry = buildSleepEntry(tm, resolvedEnd, childId, {
         startMin: s.napWindowStartMin,
@@ -3875,6 +3897,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setTimerSaveAs: (id, saveAs) => {
     set((s) => ({
       timers: s.timers.map((t) => (t.id === id ? { ...t, saveAs, name: ACTIVITY_LABEL[saveAs] } : t)),
+    }));
+    const updated = get().timers.find((t) => t.id === id);
+    if (updated) mirrorTimerEdit(get, updated);
+  },
+  // Free-form label of a generic ('note') timer; becomes the note's text when stopped.
+  setTimerName: (id, name) => {
+    set((s) => ({
+      timers: s.timers.map((t) => (t.id === id ? { ...t, name } : t)),
     }));
     const updated = get().timers.find((t) => t.id === id);
     if (updated) mirrorTimerEdit(get, updated);

@@ -54,6 +54,9 @@ function timerDetail(tm: Timer): string {
     case 'tummy':
       if (tm.milestone) parts.push(tm.milestone);
       break;
+    case 'note':
+      parts.push(tm.name || 'Note');
+      break;
   }
   if (tm.notes) parts.push(tm.notes);
   return parts.filter(Boolean).join(' · ');
