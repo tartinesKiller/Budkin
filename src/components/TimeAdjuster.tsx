@@ -109,7 +109,10 @@ export function TimeAdjuster({ mode, value, now, color, onChange, showRelative =
         inputMode="numeric"
         keyboardType="number-pad"
         returnKeyType="done"
-        selectTextOnFocus
+        // NO selectTextOnFocus: onFocus already clears the field so typing replaces the
+        // shown value, and the selection it leaves behind makes the FIRST typed digit
+        // stay selected, so the next digit replaces it instead of appending - "2050"
+        // never accumulates and the digits-first parse ("2050" -> 20:50) breaks.
         style={{
           height: 46,
           borderRadius: 12,
