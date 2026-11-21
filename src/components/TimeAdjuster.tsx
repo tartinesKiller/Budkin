@@ -5,7 +5,7 @@
  * minutes. Controlled and pure: all state lives in the parent.
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { TextInput, useWindowDimensions, View } from 'react-native';
 
 import { DayPicker } from '@/components/DayPicker';
@@ -37,7 +37,7 @@ export function TimeAdjuster({ mode, value, now, color, onChange, showRelative =
   // Only for the nudge cap below. react-native-web pins this to 1, so web layout is unaffected.
   const { fontScale } = useWindowDimensions();
   const [text, setText] = useState<string | null>(null); // null = not editing
-  const [focused, setFocused] = useState(false);
+  const inputRef = useRef<TextInput>(null);
   const [calendar, setCalendar] = useState(false);
 
   const display = mode === 'clock' ? fmtClock(value) : fmtDur(value);
@@ -100,32 +100,27 @@ export function TimeAdjuster({ mode, value, now, color, onChange, showRelative =
     // now leads its panel and this sits last, where that margin was dead space.
     <View style={{ backgroundColor: t.bg, borderWidth: 1.5, borderColor: t.line, borderRadius: 16, padding: 12, gap: 10 }}>
       <TextInput
-        // While focused the field never holds the old display value: on the very first
-        // focus Android would otherwise drop the caret at the END of that value (right
-        // side of the centred field) before the clear lands. Empty + selection {0,0}
-        // puts the caret in the middle from the start.
-        value={focused ? (text ?? '') : display}
-        onFocus={() => {
-          setFocused(true);
-          setText('');
+        ref={inputRef}
+        value={text ?? display}
+        onFocus={() => setText('')}
+        onChangeText={(v) => {
+          setText(v);
+          // selectTextOnFocus leaves the old value selected after the focus clear, which
+          // makes the NEXT digit replace the first one typed ("2050" never accumulates).
+          // Moving the caret to the end on every keystroke fixes that while keeping the
+          // base app's first-focus caret behaviour (whole value selected).
+          inputRef.current?.setNativeProps({ selection: { start: v.length, end: v.length } });
         }}
-        onChangeText={setText}
-        // Pin the caret to the end of the typed text while editing so it stays centred.
-        selection={focused ? { start: (text ?? '').length, end: (text ?? '').length } : undefined}
-        onBlur={() => {
-          setFocused(false);
-          if (text != null) commitText(text);
-        }}
+        // While editing, keep the caret pinned to the end of the typed text.
+        selection={text != null ? { start: text.length, end: text.length } : undefined}
+        onBlur={() => text != null && commitText(text)}
         onSubmitEditing={() => text != null && commitText(text)}
         placeholder={display}
         placeholderTextColor={t.faint}
         inputMode="numeric"
         keyboardType="number-pad"
         returnKeyType="done"
-        // NO selectTextOnFocus: onFocus already clears the field so typing replaces the
-        // shown value, and the selection it leaves behind makes the FIRST typed digit
-        // stay selected, so the next digit replaces it instead of appending - "2050"
-        // never accumulates and the digits-first parse ("2050" -> 20:50) breaks.
+        selectTextOnFocus
         style={{
           height: 46,
           borderRadius: 12,
