@@ -35,12 +35,29 @@ jobs:
 
       - run: npx expo prebuild --platform android --no-install
 
-      - name: Build dev APK
+      # assembleDebug would ship expo-dev-client's "Development Build" launcher screen
+      # instead of the app. Build RELEASE (the standalone app) and sign it with the
+      # throwaway debug keystore via the injected-signing properties, so no secret is
+      # needed and the APK still installs on any device.
+      - name: Ensure debug keystore
+        run: |
+          if [ ! -f "$HOME/.android/debug.keystore" ]; then
+            keytool -genkeypair -v -keystore "$HOME/.android/debug.keystore" \
+              -storepass android -keypass android -alias androiddebugkey \
+              -dname "CN=Android Debug,O=Android,C=US" -keyalg RSA -keysize 2048 -validity 10000
+          fi
+
+      - name: Build dev APK (release, debug-signed)
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        run: |
+          ./gradlew assembleRelease --no-daemon \
+            -Pandroid.injected.signing.store.file="$HOME/.android/debug.keystore" \
+            -Pandroid.injected.signing.store.password=android \
+            -Pandroid.injected.signing.key.alias=androiddebugkey \
+            -Pandroid.injected.signing.key.password=android
 
       - uses: actions/upload-artifact@v4
         with:
           name: budkin-dev-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 7
