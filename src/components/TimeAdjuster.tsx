@@ -37,6 +37,7 @@ export function TimeAdjuster({ mode, value, now, color, onChange, showRelative =
   // Only for the nudge cap below. react-native-web pins this to 1, so web layout is unaffected.
   const { fontScale } = useWindowDimensions();
   const [text, setText] = useState<string | null>(null); // null = not editing
+  const [focused, setFocused] = useState(false);
   const [calendar, setCalendar] = useState(false);
 
   const display = mode === 'clock' ? fmtClock(value) : fmtDur(value);
@@ -99,14 +100,22 @@ export function TimeAdjuster({ mode, value, now, color, onChange, showRelative =
     // now leads its panel and this sits last, where that margin was dead space.
     <View style={{ backgroundColor: t.bg, borderWidth: 1.5, borderColor: t.line, borderRadius: 16, padding: 12, gap: 10 }}>
       <TextInput
-        value={text ?? display}
-        onFocus={() => setText('')}
+        // While focused the field never holds the old display value: on the very first
+        // focus Android would otherwise drop the caret at the END of that value (right
+        // side of the centred field) before the clear lands. Empty + selection {0,0}
+        // puts the caret in the middle from the start.
+        value={focused ? (text ?? '') : display}
+        onFocus={() => {
+          setFocused(true);
+          setText('');
+        }}
         onChangeText={setText}
-        // Pin the caret to the end of the typed text while editing: without it, the first
-        // focus keeps the caret where the old display value left it (off-centre in the
-        // centred field) until the first keystroke moves it.
-        selection={text != null ? { start: text.length, end: text.length } : undefined}
-        onBlur={() => text != null && commitText(text)}
+        // Pin the caret to the end of the typed text while editing so it stays centred.
+        selection={focused ? { start: (text ?? '').length, end: (text ?? '').length } : undefined}
+        onBlur={() => {
+          setFocused(false);
+          if (text != null) commitText(text);
+        }}
         onSubmitEditing={() => text != null && commitText(text)}
         placeholder={display}
         placeholderTextColor={t.faint}
