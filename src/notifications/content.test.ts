@@ -82,6 +82,17 @@ describe('buildNamedTimerNotification', () => {
   it('omits the separator when there is no child name', () => {
     expect(buildNamedTimerNotification(timer(), '').title).toBe('Feeding');
   });
+
+  it('leads with the note head for a named note timer instead of the bare "Note"', () => {
+    const noteTimer = timer({ saveAs: 'note', activity: 'note', name: 'Dentist appointment' });
+    expect(buildNamedTimerNotification(noteTimer, 'Ellie').title).toBe('Ellie · Dentist appointment');
+    expect(buildNamedTimerNotification(noteTimer, '').title).toBe('Dentist appointment');
+  });
+
+  it('keeps the plain label for an unnamed note timer', () => {
+    const noteTimer = timer({ saveAs: 'note', activity: 'note', name: '' });
+    expect(buildNamedTimerNotification(noteTimer, 'Ellie').title).toBe('Ellie · Note');
+  });
 });
 
 describe('diffTimerNotifications', () => {

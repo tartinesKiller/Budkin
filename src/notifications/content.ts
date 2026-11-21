@@ -1,7 +1,7 @@
 /** Shaping and reconcile logic for per-timer Android notifications. Unlike the
  *  scheduled reminders, these are diffed against an in-memory `prev`. */
 
-import { ACTIVITY_LABEL } from '@/lib/activities';
+import { timerLabel } from '@/lib/activities';
 import { withChildParam } from '@/lib/deepLink';
 import type { Child, Timer } from '@/types/models';
 
@@ -32,7 +32,8 @@ export function formatClock(ms: number): string {
  *  headless widget task needs this: it runs with a snapshot holding one child's
  *  name and no roster. */
 export function buildNamedTimerNotification(timer: Timer, childName: string): TimerNotification {
-  const label = ACTIVITY_LABEL[timer.saveAs];
+  // A named note timer leads with the note's head, not the bare "Note" label.
+  const label = timerLabel(timer);
   return {
     identifier: timer.id,
     title: childName ? `${childName} · ${label}` : label,

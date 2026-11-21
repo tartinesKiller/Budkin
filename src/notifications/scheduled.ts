@@ -4,7 +4,7 @@
 
 import { treatmentDosageLabel, TIME_OF_DAY_ORDER } from '@/features/treatments/treatmentLabels';
 import { wakeWindowBand } from '@/features/insights/norms';
-import { ACTIVITY_LABEL } from '@/lib/activities';
+import { timerLabel } from '@/lib/activities';
 import { withChildParam } from '@/lib/deepLink';
 import { fmtDur } from '@/lib/format';
 import { catchUpDueAt, type MilestoneDef, MILESTONES } from '@/lib/milestones';
@@ -151,7 +151,8 @@ function staleReminders(timer: Timer, children: Child[], now: number): Scheduled
   if (threshold == null) return [];
   const fireAt = timer.start + threshold * 60_000;
   if (fireAt <= now) return [];
-  const label = ACTIVITY_LABEL[timer.saveAs];
+  // A named note timer leads with the note's head, not the bare "Note" label.
+  const label = timerLabel(timer);
   const child = children.find((c) => c.id === timer.childId);
   return [
     {

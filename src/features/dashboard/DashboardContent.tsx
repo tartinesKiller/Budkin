@@ -7,7 +7,7 @@ import { Tappable } from '@/components/press';
 import { PulsingDot } from '@/components/PulsingDot';
 import { SyncBadge } from '@/components/SyncBadge';
 import { Txt } from '@/components/Txt';
-import { ACTIVITY_LABEL, visibleActivities, visibleStatusActivities } from '@/lib/activities';
+import { ACTIVITY_LABEL, timerLabel, visibleActivities, visibleStatusActivities } from '@/lib/activities';
 import { hexA } from '@/lib/color';
 import { ExpectingCard } from '@/features/dashboard/ExpectingCard';
 import { NoChildCard } from '@/features/dashboard/NoChildCard';
@@ -247,7 +247,7 @@ export function DashboardContent({ layout }: { layout: 'phone' | 'desktop' }) {
               key={tm.id}
               onPress={() => router.push('/timers')}
               accessibilityRole="button"
-              accessibilityLabel={`${ACTIVITY_LABEL[tm.saveAs]} timer running${who.spoken}${isServer ? (tm.serverId != null ? ', synced' : ', pending sync') : ''}, view timers`}
+              accessibilityLabel={`${timerLabel(tm)} timer running${who.spoken}${isServer ? (tm.serverId != null ? ', synced' : ', pending sync') : ''}, view timers`}
               style={(s) => [
                 {
                   backgroundColor: t.surface,
@@ -273,8 +273,17 @@ export function DashboardContent({ layout }: { layout: 'phone' | 'desktop' }) {
                     truncates ahead of the badge, which is the part that can widen
                     ("Pending sync" is materially wider than "Synced"). */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
-                  <Txt unselectable numberOfLines={1} weight={600} size={12} color={t.dim} style={{ flexShrink: 1, textTransform: 'uppercase' }}>
-                    {ACTIVITY_LABEL[tm.saveAs]} running{who.drawn}
+                  {/* A named note timer shows the note's head (not uppercased); other
+                      timers keep the uppercase activity label. */}
+                  <Txt
+                    unselectable
+                    numberOfLines={1}
+                    weight={600}
+                    size={12}
+                    color={t.dim}
+                    style={{ flexShrink: 1, textTransform: tm.saveAs === 'note' && tm.name.trim() ? 'none' : 'uppercase' }}
+                  >
+                    {timerLabel(tm)} running{who.drawn}
                   </Txt>
                   {isServer && <SyncBadge synced={tm.serverId != null} inline />}
                 </View>

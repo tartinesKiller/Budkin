@@ -8,6 +8,7 @@ import {
   feedAmountIsVolume,
   intakeLevelLabel,
   sanitizeHiddenActivities,
+  timerLabel,
   visibleActivities,
   visibleStatusActivities,
   type LevelSet,
@@ -125,6 +126,19 @@ describe('Home tile visibility', () => {
     expect(visibleStatusActivities(['feeding', 'sleep', 'diaper'])).toEqual([]);
     // activities without a stat tile are ignored by the strip
     expect(visibleStatusActivities(['bath', 'pumping'])).toEqual(['feeding', 'sleep', 'diaper']);
+  });
+
+  it('timerLabel shows the note head for a named note timer, truncated past 40 chars', () => {
+    expect(timerLabel({ saveAs: 'note', name: 'Dentist appointment' })).toBe('Dentist appointment');
+    const long = 'a'.repeat(60);
+    const out = timerLabel({ saveAs: 'note', name: long });
+    expect(out.length).toBe(40);
+    expect(out.endsWith('…')).toBe(true);
+  });
+
+  it('timerLabel falls back to the activity label for unnamed notes and other activities', () => {
+    expect(timerLabel({ saveAs: 'note', name: '   ' })).toBe('Note');
+    expect(timerLabel({ saveAs: 'sleep', name: 'Sleep' })).toBe('Sleep');
   });
 
   it('sanitizeHiddenActivities keeps known tiles once each, in Home order', () => {

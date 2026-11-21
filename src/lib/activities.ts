@@ -1,6 +1,6 @@
 /** Static (theme-independent) metadata for the tracked activities. */
 
-import type { ActivityType, FeedMethod, FeedType } from '@/types/models';
+import type { ActivityType, FeedMethod, FeedType, Timer } from '@/types/models';
 import type { TimeEntryShape } from '@/types/timeEntry';
 
 /** `amount` is dual-purpose: millilitres for a bottle or formula feed, a subjective
@@ -61,6 +61,17 @@ export const ACTIVITY_LABEL: Record<ActivityType, string> = {
   note: 'Note',
   milestone: 'Milestone',
 };
+
+/** Display label for a running timer: a note timer with a name shows the head of the
+ *  note text (truncated), anything else shows the plain activity label. Used by the
+ *  dashboard card and both timer notifications so they never disagree. */
+export function timerLabel(timer: Pick<Timer, 'saveAs' | 'name'>, max = 40): string {
+  if (timer.saveAs === 'note') {
+    const n = timer.name.trim();
+    if (n) return n.length > max ? `${n.slice(0, max - 1).trimEnd()}…` : n;
+  }
+  return ACTIVITY_LABEL[timer.saveAs];
+}
 
 export const ACTIVITY_SHAPE: Record<ActivityType, TimeEntryShape> = {
   feeding: 'interval',
