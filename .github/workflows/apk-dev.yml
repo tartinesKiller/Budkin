@@ -41,6 +41,7 @@ jobs:
       # needed and the APK still installs on any device.
       - name: Ensure debug keystore
         run: |
+          mkdir -p "$HOME/.android"
           if [ ! -f "$HOME/.android/debug.keystore" ]; then
             keytool -genkeypair -v -keystore "$HOME/.android/debug.keystore" \
               -storepass android -keypass android -alias androiddebugkey \
