@@ -107,6 +107,14 @@ export function visibleActivities(hidden: readonly ActivityType[]): ActivityType
   return ALL_ACTIVITIES.filter((a) => !hidden.includes(a));
 }
 
+/** The dashboard's top status strip covers these three activities, in this order. */
+export const STATUS_ACTIVITIES: readonly ActivityType[] = ['feeding', 'sleep', 'diaper'];
+
+/** The status-strip tiles still shown: hiding a Home tile hides its stat too. */
+export function visibleStatusActivities(hidden: readonly ActivityType[]): ActivityType[] {
+  return STATUS_ACTIVITIES.filter((a) => !hidden.includes(a));
+}
+
 /**
  * Activities a twin household can log for several children in one save, each getting its
  * own entry. An allow-list, so an activity added later has to be argued onto it rather

@@ -9,6 +9,7 @@ import {
   intakeLevelLabel,
   sanitizeHiddenActivities,
   visibleActivities,
+  visibleStatusActivities,
   type LevelSet,
 } from '@/lib/activities';
 import type { ActivityType } from '@/types/models';
@@ -116,6 +117,14 @@ describe('Home tile visibility', () => {
   it('visibleActivities drops the hidden ones and keeps Home order', () => {
     expect(visibleActivities(['pumping', 'feeding'])).toEqual(['sleep', 'diaper', 'tummy', 'bath', 'temperature', 'medication']);
     expect(visibleActivities([])).toEqual(ALL_ACTIVITIES);
+  });
+
+  it('visibleStatusActivities mirrors the Home-tile visibility for the stat strip', () => {
+    expect(visibleStatusActivities([])).toEqual(['feeding', 'sleep', 'diaper']);
+    expect(visibleStatusActivities(['sleep'])).toEqual(['feeding', 'diaper']);
+    expect(visibleStatusActivities(['feeding', 'sleep', 'diaper'])).toEqual([]);
+    // activities without a stat tile are ignored by the strip
+    expect(visibleStatusActivities(['bath', 'pumping'])).toEqual(['feeding', 'sleep', 'diaper']);
   });
 
   it('sanitizeHiddenActivities keeps known tiles once each, in Home order', () => {

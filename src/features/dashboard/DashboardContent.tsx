@@ -7,7 +7,7 @@ import { Tappable } from '@/components/press';
 import { PulsingDot } from '@/components/PulsingDot';
 import { SyncBadge } from '@/components/SyncBadge';
 import { Txt } from '@/components/Txt';
-import { ACTIVITY_LABEL, visibleActivities } from '@/lib/activities';
+import { ACTIVITY_LABEL, visibleActivities, visibleStatusActivities } from '@/lib/activities';
 import { hexA } from '@/lib/color';
 import { ExpectingCard } from '@/features/dashboard/ExpectingCard';
 import { NoChildCard } from '@/features/dashboard/NoChildCard';
@@ -168,14 +168,18 @@ export function DashboardContent({ layout }: { layout: 'phone' | 'desktop' }) {
     milestone: 'Tap to log',
   };
 
+  // One status tile per activity, keyed so the strip follows the Home-tile visibility:
+  // hiding "Sleep" in Settings hides the Sleep stat too (see visibleStatusActivities).
   const status = [
     {
+      activity: 'feeding' as const,
       label: 'Fed',
       color: t.activity.feeding,
       value: lastFeedAgo != null ? fmtAgoShort(lastFeedAgo) : '—',
       sub: lastFeedAgo != null ? `ago · ${fedSide ?? ''}` : 'no feeds',
     },
     {
+      activity: 'sleep' as const,
       // Always the day's running total, never just the current nap, and no "—"
       // empty state: a real zero is the answer to "how much sleep today".
       label: 'Sleep',
@@ -184,18 +188,22 @@ export function DashboardContent({ layout }: { layout: 'phone' | 'desktop' }) {
       sub: daySinceLabel,
     },
     {
+      activity: 'diaper' as const,
       label: 'Diaper',
       color: t.activity.diaper,
       value: diaperAgo != null ? fmtAgoShort(diaperAgo) : '—',
       sub: dia ? (dia.solid ? 'ago · solid' : 'ago · wet') : 'none',
     },
   ];
+  const visible = visibleActivities(hiddenActivities);
+  const visibleStatus = status.filter((st) => visibleStatusActivities(hiddenActivities).includes(st.activity));
 
   return (
     <>
       <MilestoneNudge />
+      {visibleStatus.length > 0 && (
       <View style={{ flexDirection: 'row', gap: 9, marginBottom: 8 }}>
-        {status.map((st) => (
+        {visibleStatus.map((st) => (
           <View
             key={st.label}
             style={{
@@ -224,6 +232,7 @@ export function DashboardContent({ layout }: { layout: 'phone' | 'desktop' }) {
           </View>
         ))}
       </View>
+      )}
 
       {/* One full-width card per running timer, then the start-timer card. The
           list is global, so a sibling's timer stays visible while another child
@@ -338,7 +347,7 @@ export function DashboardContent({ layout }: { layout: 'phone' | 'desktop' }) {
       </View>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 11 }}>
-        {visibleActivities(hiddenActivities).map((a) => (
+        {visible.map((a) => (
           <ActivityTile
             key={a}
             label={ACTIVITY_LABEL[a]}
