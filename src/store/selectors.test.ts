@@ -836,9 +836,12 @@ describe('treatmentDueState / treatmentDueList / treatmentDueHint / treatmentsAl
     });
 
     it('a dose logged seconds into the current minute settles the interval immediately (minute-floored now)', () => {
-      // Dose at 08:00:45, dashboard now floored to 08:00: 6h later is 14:00:00 floored.
+      // Dose at 08:00:45 with the dashboard's now floored to 08:00:00 - before the fix the
+      // dose fell outside 'e.time <= now', so the treatment read as due right after logging.
       const doseAt = new Date(2026, 2, 4, 8, 0, 45).getTime();
-      expect(treatmentDueState(every6, [dose(doseAt)], at(14))).toMatchObject({ due: 0 });
+      expect(treatmentDueState(every6, [dose(doseAt)], at(8))).toMatchObject({ due: 0 });
+      // ...and it owes again once the interval has elapsed at minute granularity.
+      expect(treatmentDueState(every6, [dose(doseAt)], at(14))).toMatchObject({ due: 1 });
     });
 
     it('counts from the LATEST dose, not the first', () => {
