@@ -431,15 +431,21 @@ export interface TreatmentDue {
  *  dose behave: one dose at 19:00 on a morning+evening treatment settles one owed dose
  *  and leaves the other owed. Interval treatments owe at most ONE dose at once. */
 export function treatmentDueState(treatment: Treatment, entries: Entry[], now: number): TreatmentDue {
+  // Minute granularity throughout: callers (the dashboard) floor `now` to the minute,
+  // and a dose logged seconds into the current minute must count IMMEDIATELY, not at the
+  // next minute boundary - otherwise the card keeps showing "due" right after logging.
+  const nowMin = Math.floor(now / 60000);
   const doses = dosesForTreatment(entries, treatment);
   const todayMidnight = startOfDay(now);
-  const dosesToday = doses.filter((e) => e.time >= todayMidnight && e.time <= now).length;
+  const dosesToday = doses.filter((e) => e.time >= todayMidnight && Math.floor(e.time / 60000) <= nowMin).length;
 
   if (treatment.scheduleMode === 'everyHours') {
     // An interval with no hours set has no schedule to be late against.
     if (treatment.everyHours == null) return { treatment, due: 0, expected: dosesToday };
-    const last = doses.reduce<number | null>((max, e) => (e.time <= now && (max == null || e.time > max) ? e.time : max), null);
-    const due = last == null || now >= last + treatment.everyHours * 3600000 ? 1 : 0;
+    const last = doses.reduce<number | null>((max, e) => (Math.floor(e.time / 60000) <= nowMin && (max == null || e.time > max) ? e.time : max), null);
+    // Compare at minute granularity too: floor the last dose before adding the interval.
+    const lastMin = last != null ? Math.floor(last / 60000) * 60000 : null;
+    const due = lastMin == null || now >= lastMin + treatment.everyHours * 3600000 ? 1 : 0;
     return { treatment, due, expected: dosesToday + due };
   }
 

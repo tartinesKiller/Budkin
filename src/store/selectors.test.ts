@@ -755,6 +755,16 @@ describe('treatmentDueState / treatmentDueList / treatmentDueHint / treatmentsAl
       expect(treatmentDueState(treatment(), [dose(at(8, 30))], at(9))).toMatchObject({ due: 0, expected: 1 });
     });
 
+    it('counts a dose logged seconds into the current minute even when now is minute-floored', () => {
+      // The dashboard floors now to the minute; the dose keeps its real seconds.
+      const doseAt = new Date(2026, 2, 4, 9, 0, 45).getTime();
+      const flooredNow = at(9, 0);
+      expect(treatmentDueState(treatment(), [dose(doseAt)], flooredNow)).toMatchObject({ due: 0, expected: 1 });
+      // A dose from a later minute still does not count.
+      const laterDose = new Date(2026, 2, 4, 9, 1, 5).getTime();
+      expect(treatmentDueState(treatment(), [dose(laterDose)], flooredNow)).toMatchObject({ due: 1, expected: 1 });
+    });
+
     it('owes the second slot once evening arrives', () => {
       const doses = [dose(at(8, 30))];
       expect(treatmentDueState(treatment(), doses, at(17))).toMatchObject({ due: 0, expected: 1 });
@@ -823,6 +833,12 @@ describe('treatmentDueState / treatmentDueList / treatmentDueHint / treatmentsAl
       const doses = [dose(at(8))];
       expect(treatmentDueState(every6, doses, at(13, 59))).toMatchObject({ due: 0, expected: 1 });
       expect(treatmentDueState(every6, doses, at(14))).toMatchObject({ due: 1, expected: 2 });
+    });
+
+    it('a dose logged seconds into the current minute settles the interval immediately (minute-floored now)', () => {
+      // Dose at 08:00:45, dashboard now floored to 08:00: 6h later is 14:00:00 floored.
+      const doseAt = new Date(2026, 2, 4, 8, 0, 45).getTime();
+      expect(treatmentDueState(every6, [dose(doseAt)], at(14))).toMatchObject({ due: 0 });
     });
 
     it('counts from the LATEST dose, not the first', () => {
