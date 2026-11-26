@@ -571,6 +571,8 @@ beforeEach(() => {
 });
 
 const s = () => useAppStore.getState();
+// Captured at module load, before any beforeEach/setState: the store's real default.
+const INITIAL_THEME_MODE = useAppStore.getState().themeMode;
 
 /** Branch-level invariant: whenever hydrate/refresh/adopt leaves `children` non-empty,
  *  `selectedChildId` must name one of them. Guards against a server-space id being used
@@ -7035,6 +7037,10 @@ describe('insights slice', () => {
 });
 
 describe('theme persistence', () => {
+  it('defaults to the system theme (captured before any test mutates the store)', () => {
+    expect(INITIAL_THEME_MODE).toBe('system');
+  });
+
   it('toggleTheme persists the new mode via savePrefs', () => {
     useAppStore.setState({ themeMode: 'dark' });
     s().toggleTheme();

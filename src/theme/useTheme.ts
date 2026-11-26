@@ -4,8 +4,8 @@ import { Appearance, AppState, useColorScheme } from 'react-native';
 import { useAppStore } from '@/store/useAppStore';
 import { makeTheme, resolveThemeMode, type Theme } from '@/theme/tokens';
 
-/** Resolve the active theme from the global theme mode (default: Night); 'system'
- *  follows the phone's light/dark setting and re-renders when it changes.
+/** Resolve the active theme from the global theme mode (default: 'system', which
+ *  follows the phone's light/dark setting and re-renders when it changes).
  *
  *  `useColorScheme` only refreshes while the app is in the foreground: if the phone's
  *  theme changes while Budkin is backgrounded (e.g. the app is then opened from the

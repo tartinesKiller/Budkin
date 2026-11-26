@@ -1365,7 +1365,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   queuedIds: [],
   savedServers: [],
 
-  themeMode: 'dark',
+  themeMode: 'system',
   unitSystem: 'metric',
   showGrowthReference: true,
   tutorialSeen: false,
