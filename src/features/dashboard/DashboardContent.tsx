@@ -196,7 +196,8 @@ export function DashboardContent({ layout }: { layout: 'phone' | 'desktop' }) {
     },
   ];
   const visible = visibleActivities(hiddenActivities);
-  const visibleStatus = status.filter((st) => visibleStatusActivities(hiddenActivities).includes(st.activity));
+  const statusActivities = visibleStatusActivities(hiddenActivities);
+  const visibleStatus = status.filter((st) => statusActivities.includes(st.activity));
 
   return (
     <>

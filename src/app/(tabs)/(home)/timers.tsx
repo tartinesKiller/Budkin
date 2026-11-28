@@ -136,7 +136,7 @@ export default function Timers() {
                         onChangeText={(v) => setTimerName(tm.id, v)}
                         placeholder="Timer name"
                         placeholderTextColor={t.faint}
-                        accessibilityLabel={`Name of the ${tm.name} timer`}
+                        accessibilityLabel="Name of the note timer"
                         style={{
                           flex: 1,
                           height: 42,
