@@ -295,7 +295,6 @@ export type AdoptResult =
 
 interface AppActions {
   tick: (now: number) => void;
-  toggleTheme: () => void;
   setThemeMode: (mode: ThemeMode) => void;
   completeTutorial: () => void;
   setUnitSystem: (system: UnitSystem) => void;
@@ -1066,6 +1065,14 @@ function mirrorTimerEdit(get: Get, timer: Timer): void {
   }
 }
 
+/** Leaving "still ongoing" on a FRESH sheet with an untouched start: drop the pin
+ *  setOngoing made so start derives from end - lasted again, the reverse of going
+ *  live. A start the user edited keeps its pin, and so does an entry/timer edit,
+ *  whose pinned start is the record's own, not setOngoing's. */
+function isFreshOngoing(te: TimeEntryState, editingId: string | null, fromTimerId: string | null): boolean {
+  return Boolean(te.ongoing) && !te.startEdited && !editingId && !fromTimerId;
+}
+
 /** Where a "still ongoing" interval actually started. On an EDIT the logged entry's own
  *  `start` is the only exact answer: `openEdit` pins the end plus a duration ROUNDED to
  *  whole minutes, so the rounding alone can move a derived start by half a minute.
@@ -1445,11 +1452,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   tick: (now) => set({ now }),
 
-  toggleTheme: () => {
-    const next: ThemeMode = get().themeMode === 'dark' ? 'light' : 'dark';
-    set({ themeMode: next });
-    void savePrefs({ themeMode: next });
-  },
   setThemeMode: (mode) => {
     set({ themeMode: mode });
     void savePrefs({ themeMode: mode });
@@ -3456,11 +3458,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         next.order = ov.order;
       } else {
         next.order = reorder(s.te.order, 'end');
-        // Leaving "still ongoing" on a FRESH sheet with an untouched start: drop the pin
-        // setOngoing made so start derives from end - lasted again, the reverse of going
-        // live. A start the user edited keeps its pin, and so does an entry/timer edit,
-        // whose pinned start is the record's own, not setOngoing's.
-        if (s.te.ongoing && !s.te.startEdited && !s.editingId && !s.fromTimerId) {
+        if (isFreshOngoing(s.te, s.editingId, s.fromTimerId)) {
           next.startAbs = undefined;
           next.startAgoMin = undefined;
           next.startAnchor = undefined;
@@ -3479,7 +3477,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         next.order = ov.order;
       } else {
         next.order = reorder(s.te.order, 'end');
-        if (s.te.ongoing && !s.te.startEdited && !s.editingId && !s.fromTimerId) {
+        if (isFreshOngoing(s.te, s.editingId, s.fromTimerId)) {
           next.startAbs = undefined;
           next.startAgoMin = undefined;
           next.startAnchor = undefined;

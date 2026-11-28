@@ -7041,20 +7041,6 @@ describe('theme persistence', () => {
     expect(INITIAL_THEME_MODE).toBe('system');
   });
 
-  it('toggleTheme persists the new mode via savePrefs', () => {
-    useAppStore.setState({ themeMode: 'dark' });
-    s().toggleTheme();
-    expect(s().themeMode).toBe('light');
-    expect(savePrefs).toHaveBeenCalledWith({ themeMode: 'light' });
-  });
-
-  it('toggling back to dark persists dark too', () => {
-    useAppStore.setState({ themeMode: 'light' });
-    s().toggleTheme();
-    expect(s().themeMode).toBe('dark');
-    expect(savePrefs).toHaveBeenCalledWith({ themeMode: 'dark' });
-  });
-
   it('setThemeMode persists the chosen mode, including system', () => {
     useAppStore.setState({ themeMode: 'dark' });
     s().setThemeMode('system');

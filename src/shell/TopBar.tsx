@@ -22,7 +22,7 @@ export function TopBar() {
   const now = useAppStore((s) => s.now);
   const offline = useAppStore((s) => s.offline);
   const pending = useAppStore(selectPendingCount);
-  const toggleTheme = useAppStore((s) => s.toggleTheme);
+  const setThemeMode = useAppStore((s) => s.setThemeMode);
   const refresh = useAppStore((s) => s.refresh);
   const showToast = useAppStore((s) => s.showToast);
   const childFirst = useAppStore((s) => s.children.find((c) => c.id === s.selectedChildId)?.first);
@@ -107,8 +107,11 @@ export function TopBar() {
           {clock}
         </Txt>
 
+        {/* t.mode is the RESOLVED mode ('system' already folded to dark/light), so
+            toggling from 'system' lands on the opposite of what is on screen instead
+            of switching to an indistinguishable explicit mode. */}
         <Tappable
-          onPress={toggleTheme}
+          onPress={() => setThemeMode(t.mode === 'dark' ? 'light' : 'dark')}
           accessibilityRole="button"
           accessibilityLabel="Toggle theme"
           style={(s) => [
