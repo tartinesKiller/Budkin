@@ -66,7 +66,7 @@ describe('encode/decode timer name', () => {
   it('round-trips a generic note timer with its custom name', () => {
     const t = base({ saveAs: 'note', activity: 'note', name: 'Hot water in dispenser' });
     const name = encodeTimerName(t);
-    expect(name).toBe('Note \u00b7 v1 \u00b7 n:Hot water in dispenser');
+    expect(name).toBe('Note \u00b7 v1 \u00b7 n:Hot%20water%20in%20dispenser');
     expect(decodeTimerName(name)).toMatchObject({ saveAs: 'note', name: 'Hot water in dispenser' });
     const back = serverTimerToTimer({ id: 9, name, start: 5 }, 'c1');
     expect(back).toMatchObject({ saveAs: 'note', name: 'Hot water in dispenser' });
@@ -75,6 +75,17 @@ describe('encode/decode timer name', () => {
   it('keeps a note name containing the separator intact through the wire format', () => {
     const t = base({ saveAs: 'note', activity: 'note', name: 'a \u00b7 b' });
     expect(decodeTimerName(encodeTimerName(t)).name).toBe('a \u00b7 b');
+  });
+
+  it('keeps a note name containing a slash intact instead of turning it into the separator', () => {
+    const t = base({ saveAs: 'note', activity: 'note', name: '1/2 comprim\u00e9' });
+    expect(decodeTimerName(encodeTimerName(t)).name).toBe('1/2 comprim\u00e9');
+  });
+
+  it('decodes a pre-encoding note name raw rather than dropping it', () => {
+    expect(decodeTimerName('Note \u00b7 v1 \u00b7 n:Plain raw label').name).toBe('Plain raw label');
+    // a bare '%' made a legacy raw name undecodable; it must survive verbatim
+    expect(decodeTimerName('Note \u00b7 v1 \u00b7 n:50% off').name).toBe('50% off');
   });
 
   it('falls back to a generic feeding timer for a foreign/unmarked name', () => {

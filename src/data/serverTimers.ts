@@ -19,6 +19,17 @@ const LABEL_TO_ACTIVITY: Record<string, ActivityType> = Object.fromEntries(
   (Object.entries(ACTIVITY_LABEL) as [ActivityType, string][]).map(([k, v]) => [v, k]),
 );
 
+/** The note label is percent-encoded on the wire. A token that fails to decode
+ *  (a pre-encoding timer whose raw name held a bare '%') is kept as-is: better a
+ *  slightly wrong label than a dropped one. */
+function decodeNoteName(raw: string): string {
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
 export interface DecodedTimer {
   saveAs: ActivityType;
   feedType?: FeedType;
@@ -51,8 +62,10 @@ export function encodeTimerName(t: Timer): string {
   } else if (t.saveAs === 'sleep') {
     if (t.nap === true) toks.push('nap');
   } else if (t.saveAs === 'note') {
-    // The custom label rides in an `n:` token; SEP inside it would break the grammar.
-    toks.push(`n:${t.name.replaceAll(SEP, '/')}`);
+    // The custom label rides percent-encoded in an `n:` token: encodeURIComponent
+    // neutralizes both SEP and '/', so neither can break the grammar nor corrupt
+    // the label on the round trip.
+    toks.push(`n:${encodeURIComponent(t.name)}`);
   }
   return `${ACTIVITY_LABEL[t.saveAs]}${SEP}${toks.join(SEP)}`;
 }
@@ -72,7 +85,7 @@ export function decodeTimerName(name: string): DecodedTimer {
       const n = Number(tok.slice(4));
       if (Number.isFinite(n)) d.amount = n;
     } else if (tok.startsWith('n:')) {
-      d.name = tok.slice(2).replaceAll('/', SEP);
+      d.name = decodeNoteName(tok.slice(2));
     }
   }
   return d;
